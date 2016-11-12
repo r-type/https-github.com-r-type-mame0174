@@ -409,8 +409,8 @@ void process_mouse_state(void)
    mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
    mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
    mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-   mouseLX = mouse_x*INPUT_RELATIVE_PER_PIXEL;;
-   mouseLY = mouse_y*INPUT_RELATIVE_PER_PIXEL;;
+   mouseLX = mouse_x*INPUT_RELATIVE_PER_PIXEL;
+   mouseLY = mouse_y*INPUT_RELATIVE_PER_PIXEL;
 
    if(mbL==0 && mouse_l)
    {
@@ -1450,17 +1450,21 @@ static int execute_game_cmd(char* path)
 
    return 0;
 }
-
+/*
 #ifdef __cplusplus
 extern "C"
 #endif
+*/
+retro_osd_interface *retro_global_osd;
+
 
 int mmain(int argc, const char *argv)
 {
    unsigned i;
-   osd_options options;
+   //osd_options options;
    //cli_options MRoptions;
    int result = 0;
+   static osd_options retro_global_options;
 
    strcpy(gameName,argv);
 
@@ -1491,12 +1495,17 @@ int mmain(int argc, const char *argv)
       if (log_cb)
          log_cb(RETRO_LOG_DEBUG, " %s\n",XARGV[i]);
    }
-
+/*
    retro_osd_interface osd(options);
    osd.register_options();
+*/
+   retro_global_osd= global_alloc(retro_osd_interface(retro_global_options));
 
+   retro_global_osd->register_options();
+ 
   // cli_frontend frontend(options, osd);
-   result =  emulator_info::start_frontend(options, osd,PARAMCOUNT, ( char **)xargv_cmd);
+  // result =  emulator_info::start_frontend(options, osd,PARAMCOUNT, ( char **)xargv_cmd);
+  result =  emulator_info::start_frontend(retro_global_options, *retro_global_osd,PARAMCOUNT, ( char **)xargv_cmd);
 
 
    xargv_cmd[PARAMCOUNT - 2] = NULL;
@@ -1603,8 +1612,10 @@ void retro_osd_interface::init(running_machine &machine)
 	if (log_cb)
 		log_cb(RETRO_LOG_INFO, "OSD initialization complete\n");
 
-   retro_switch_to_main_thread();
+  // retro_switch_to_main_thread();
 }
+
+extern int RLOOP;
 
 void retro_osd_interface::update(bool skip_redraw)
 {
@@ -1703,8 +1714,8 @@ void retro_osd_interface::update(bool skip_redraw)
 		machine().ui_input().push_char_event( our_target, (unicode_char)ui_ipt_pushchar);
 		ui_ipt_pushchar=-1;
 	}
-
-   retro_switch_to_main_thread();
+ RLOOP=0;
+   //retro_switch_to_main_thread();
 }
 
 //============================================================
